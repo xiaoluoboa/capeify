@@ -63,19 +63,46 @@ def convert(args):
     reg_sect = reg_sect.split(",")[0]
     reg = read_inf.read_reg(inf_file_path, reg_sect)
 
+    # 找到第一个 .cur 文件来让用户选择分辨率
+    resolution_index = 0
+    for win_cur in reg:
+        cur_file_name = strings[win_cur.lower()]
+        if cur_file_name.lower().endswith(".cur"):
+            first_cur_path = f"{args.path}/{cur_file_name}"
+            resolution_index = c_convert2png.get_resolution_choice(first_cur_path)
+            break
+
+    # 一次性选择缩放因子
+    print("\n选择最终缩放因子:")
+    print("1. 不变 (/1)")
+    print("2. /2")
+    print("3. /5")
+    print("4. /10")
+    scale_choice = input("请输入选择 (1-4，默认为 1): ").strip() or "1"
+    
+    scale_factors = {"1": 1, "2": 2, "3": 5, "4": 10}
+    scale_factor = scale_factors.get(scale_choice, 1)
+
     cursors = []
     for idx, win_cur in enumerate(reg):
         if win2mac_cur[idx]:
             path = f"{args.path}/{strings[win_cur.lower()]}"
             ext = strings[win_cur.lower()][-3:]
             if ext == "cur":
-                data = c_convert2png.convert_cur2png(path)
+                # 使用之前选择的分辨率索引
+                data = c_convert2png.convert_cur2png(path, resolution_index=resolution_index)
 
                 data_enc = b64encode(data)
                 data_enc = data_enc.decode()
 
                 hs_x, hs_y = c_get_hotspot.get_hotspot(path)
                 w, h = c_get_size.get_size(data)
+                
+                # 应用一次性选择的缩放因子
+                w = w / scale_factor
+                h = h / scale_factor
+                hs_x = hs_x / scale_factor
+                hs_y = hs_y / scale_factor
 
                 for cur_name in win2mac_cur[idx]:
                     cursors.append(
@@ -103,6 +130,12 @@ def convert(args):
                 hs_x, hs_y = a_get_hotspot.get_hotspot(path)
                 w, h = a_get_size.get_size(path)
 
+                # 应用一次性选择的缩放因子
+                w = w / scale_factor
+                h = h / scale_factor
+                hs_x = hs_x / scale_factor
+                hs_y = hs_y / scale_factor
+
                 frame_dur = a_get_frame_duration.get_frame_duration(path)
                 frame_dur = (frame_dur * real_frame_count) / lowered_frame_count
 
@@ -124,8 +157,13 @@ def convert(args):
 
     cur_pack_name = args.path.split("/")[-1]
 
+    # 转换完成后，再让用户输入元数据
+    print("\n转换完成！请输入元数据信息:")
+    author_name = input(f"请输入作者名 (默认: '{cur_pack_name}'): ").strip() or cur_pack_name
+    cape_name = input(f"请输入主题名 (默认: '{cur_pack_name}'): ").strip() or cur_pack_name
+
     cape = create_xml.create_cape(
-        cur_pack_name + "_author", cur_pack_name, cursors, cur_pack_name + "_identifier"
+        author_name, cape_name, cursors, cape_name + "_identifier"
     )
     cape.write(args.out, pretty_print=True)
 
