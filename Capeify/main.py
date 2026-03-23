@@ -97,12 +97,31 @@ def convert(args):
 
     # 找到第一个 .cur 文件来让用户选择分辨率
     resolution_index = 0
-    for win_cur in reg:
-        cur_file_name = strings[win_cur.lower()]
-        if cur_file_name.lower().endswith(".cur"):
-            first_cur_path = f"{args.path}/{cur_file_name}"
-            resolution_index = c_convert2png.get_resolution_choice(first_cur_path)
-            break
+    first_cur_found = False
+    
+    if is_dict_format:
+        for win_key, win_cur in reg.items():
+            if not win_cur or not win_cur.strip():  # 跳过空字符串
+                continue
+            cur_file_name = strings.get(win_cur.lower())
+            if cur_file_name and cur_file_name.lower().endswith(".cur"):
+                first_cur_path = f"{args.path}/{cur_file_name}"
+                resolution_index = c_convert2png.get_resolution_choice(first_cur_path)
+                first_cur_found = True
+                break
+    else:
+        for win_cur in reg:
+            if not win_cur or not win_cur.strip():  # 跳过空字符串
+                continue
+            cur_file_name = strings.get(win_cur.lower())
+            if cur_file_name and cur_file_name.lower().endswith(".cur"):
+                first_cur_path = f"{args.path}/{cur_file_name}"
+                resolution_index = c_convert2png.get_resolution_choice(first_cur_path)
+                first_cur_found = True
+                break
+
+    if not first_cur_found:
+        print("Warning: No .cur files found for resolution selection, using default.")
 
     # 一次性选择缩放因子
     print("\n选择最终缩放因子:")

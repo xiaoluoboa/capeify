@@ -17,7 +17,7 @@
 
 | 动作 | 命令 | 说明 |
 | :--- | :--- | :--- |
-| **进入命令行** | `docker run -it --rm --entrypoint /bin/bash capeify-pro` | 覆盖默认入口，进入容器内部的 Bash。 |
+| **进入命令行** | `docker run -it --rm -v "$(pwd):/app" --entrypoint /bin/bash capeify-pro` | 覆盖默认入口，进入容器内部的 Bash。挂载当前目录到/app |
 | **复制文件进容器** | `docker cp ./main.py <容器ID>:/usr/local/lib/python3.11/site-packages/Capeify/main.py` | 在容器运行状态下，把 Mac 上改好的代码推进去。 |
 | **封装/保存镜像** | `docker commit --change='ENTRYPOINT ["capeify"]' <容器ID> capeify-pro` | 将调试好的容器保存为新镜像，并恢复自动运行功能。 |
 | **清理空间** | `docker system prune` | 删除所有停止的容器和缓存。 |
